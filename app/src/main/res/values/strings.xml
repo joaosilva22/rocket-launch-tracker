@@ -1,0 +1,17 @@
+<resources>
+
+    <string name="app_name">Rocket Launch Tracker</string>
+
+    <!-- Empty list view message. -->
+    <string name="no_results">No results.</string>
+    <string name="action_refresh">Refresh</string>
+
+    <!-- Details page strings. -->
+    <string name="primary_mission">Primary mission</string>
+    <string name="launch_vehicle">Launch vehicle</string>
+    <string name="launch_pad">Launch pad</string>
+    <string name="window_start">Window start</string>
+    <string name="window_end">Window end</string>
+    <string name="notification">Notify me</string>
+
+</resources>

@@ -1,8 +1,10 @@
 package me.joaosilva22.rocketlaunchtracker.fragments;
 
+import android.app.Notification;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.icu.util.GregorianCalendar;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -18,12 +20,15 @@ import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.util.Date;
+
 import me.joaosilva22.rocketlaunchtracker.R;
 import me.joaosilva22.rocketlaunchtracker.models.LaunchDatabaseContract;
 import me.joaosilva22.rocketlaunchtracker.models.LaunchDatabaseHelper;
 import me.joaosilva22.rocketlaunchtracker.network.LaunchDetailsLoader;
 import me.joaosilva22.rocketlaunchtracker.network.LaunchDetailsLoaderObserver;
 import me.joaosilva22.rocketlaunchtracker.utils.CustomDateFormatter;
+import me.joaosilva22.rocketlaunchtracker.utils.NotificationHelper;
 
 public class LaunchDetailsFragment extends Fragment implements LaunchDetailsLoaderObserver {
 
@@ -39,6 +44,9 @@ public class LaunchDetailsFragment extends Fragment implements LaunchDetailsLoad
     private Switch switc;
     private int id;
 
+    private NotificationHelper notifier;
+    private String start;
+
     public LaunchDetailsFragment() {}
 
     @Override
@@ -53,6 +61,8 @@ public class LaunchDetailsFragment extends Fragment implements LaunchDetailsLoad
         Bundle extras = getActivity().getIntent().getExtras();
         id = extras.getInt(UpcomingLaunchesFragment.EXTRA_LAUNCH_ID);
         loader.load(id);
+
+        notifier = new NotificationHelper(this.getContext());
     }
 
     @Override
@@ -88,12 +98,14 @@ public class LaunchDetailsFragment extends Fragment implements LaunchDetailsLoad
     public void update() {
         Cursor c = database.rawQuery(SQL_QUERY, new String[] {Integer.toString(id)});
         c.moveToFirst();
+
         fillMissionDescription(c);
         fillLaunchVehicle(c);
         fillLaunchPad(c);
         fillWindowStart(c);
         fillWindowEnd(c);
         updateSwitch(c);
+
         refresh.setRefreshing(false);
         refresh.setVisibility(View.VISIBLE);
         progress.setVisibility(View.GONE);
@@ -131,7 +143,7 @@ public class LaunchDetailsFragment extends Fragment implements LaunchDetailsLoad
     private void fillWindowStart(Cursor c) {
         int index = c.getColumnIndex(LaunchDatabaseContract.DetailsEntry.COLUMN_WINDOW_START);
         String s = c.getString(index);
-        String start = CustomDateFormatter.toSQL(s, CustomDateFormatter.Formats.DISPLAY,
+        start = CustomDateFormatter.toSQL(s, CustomDateFormatter.Formats.DISPLAY,
                 CustomDateFormatter.TimeZones.UTC);
 
         TextView t = (TextView) getView().findViewById(R.id.launch_details_window_start);
@@ -161,5 +173,14 @@ public class LaunchDetailsFragment extends Fragment implements LaunchDetailsLoad
         values.put(LaunchDatabaseContract.DetailsEntry.COLUMN_NOTIFY, (notify)? 1: 0);
         write.update(LaunchDatabaseContract.DetailsEntry.TABLE_NAME, values,
                 LaunchDatabaseContract.DetailsEntry.COLUMN_LAUNCH_ID + "=" + id, null);
+
+        if (notify) {
+            Notification notification = notifier.getNotification("Launch", "Launch will begin shortly");
+            Long time = CustomDateFormatter.toMillis(start, CustomDateFormatter.Formats.SQL) -
+                    20 * 60 * 1000;
+            notifier.scheduleNotification(notification, id, time);
+        } else {
+            notifier.unscheduleNotification(id);
+        }
     }
 }

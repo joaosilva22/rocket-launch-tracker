@@ -36,6 +36,19 @@ public final class CustomDateFormatter {
         return convert(date, format, Formats.DISPLAY, timeZone);
     }
 
+    public static Long toMillis(String date, String format) {
+        Date d = new Date();
+        SimpleDateFormat f = new SimpleDateFormat(format, Locale.US);
+
+        try {
+            d = f.parse(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return d.getTime();
+    }
+
     private static String convert(String date, String oldFormat, String newFormat, TimeZone timeZone) {
         Date d = new Date();
         SimpleDateFormat o = new SimpleDateFormat(oldFormat, Locale.US);

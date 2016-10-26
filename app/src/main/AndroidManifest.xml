@@ -46,6 +46,8 @@
 
         </activity>
 
+        <receiver android:name=".managers.NotificationPublisher" />
+
     </application>
 
 </manifest>
